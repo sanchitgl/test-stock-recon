@@ -1,0 +1,14 @@
+-create Environment 
+virtualenv shipment_reco
+
+-Activate environment 
+source shipment_reco/bin/activate
+
+- run API
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
+- export dependencies
+pip3 freeze > requirements.txt
+
+- Install dependencies
+pip install -r requirements.txt
