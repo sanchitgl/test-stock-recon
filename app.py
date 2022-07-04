@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 import altair as alt
 from PIL import Image
+import time
 
 st.set_page_config(layout="wide")
 
@@ -39,6 +40,7 @@ if authentication_status == None:
     st.warning("Please enter your username and Password")
 
 if authentication_status:
+    time.sleep(1)
     def landing_page():
         logo = Image.open('images/reconcify_logo.png')
         hide_streamlit_style = """
