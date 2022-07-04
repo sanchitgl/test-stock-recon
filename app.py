@@ -53,7 +53,7 @@ if authentication_status:
             st.image(logo)
         #with title:
         #st.header('Shipment Reconcilliation')
-        st.write('###')
+        #st.write('###')
         shipment_instructions, warehouse_reports, inventory_ledger, submit = file_upload_form()
         #print(warehouse_reports)
         if submit:
@@ -127,12 +127,13 @@ if authentication_status:
         os.remove("temp/shipment_reco.xlsx")
 
     def file_upload_form():
+        colour = "#89CFF0"
         with st.form(key = 'ticker'):
             text, upload = st.columns([2.5,3]) 
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#6F8FAF">{"Upload Shipment Instruction:"}</h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#4682B4">{"&nbsp; Upload Shipment Instruction:"}</h5>', unsafe_allow_html=True)
             with upload:
                 shipment_instructions = st.file_uploader("",key = 'ship_ins')
 
@@ -140,7 +141,7 @@ if authentication_status:
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#6F8FAF">{"Upload Warehouse Reports:"}<h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#4682B4">{"&nbsp; Upload Warehouse Reports:"}<h5>', unsafe_allow_html=True)
             with upload:
                 warehouse_reports = st.file_uploader("",key = 'ware_rep', accept_multiple_files=True)
 
@@ -148,11 +149,11 @@ if authentication_status:
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#6F8FAF"> {"Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#4682B4"> {"&nbsp; Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
             with upload:
                 inventory_ledger = st.file_uploader("",key = 'inv_led')
             
-            a,b,button = st.columns([2,2,1.5]) 
+            a,b,button = st.columns([2.5,5,1.5]) 
             with button:
                 st.write('###')
                 submit = st.form_submit_button(label = "Start Reconciliation")
