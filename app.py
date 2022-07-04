@@ -7,6 +7,9 @@ import pickle
 from pathlib import Path 
 import yaml
 import altair as alt
+from PIL import Image
+
+st.set_page_config(layout="wide")
 
 names = ['admin', 'amit']
 usernames = ['admin', 'amit']
@@ -37,6 +40,7 @@ if authentication_status == None:
 
 if authentication_status:
     def landing_page():
+        logo = Image.open('images/reconcify_logo.png')
         hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -44,7 +48,11 @@ if authentication_status:
             </style>
             """
         st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
-        st.title('Shipment Reconcilliation')
+        emp,Logo,emp = st.columns([2,2,2])
+        with Logo:
+            st.image(logo)
+        #with title:
+        #st.header('Shipment Reconcilliation')
         st.write('###')
         shipment_instructions, warehouse_reports, inventory_ledger, submit = file_upload_form()
         #print(warehouse_reports)
@@ -124,7 +132,7 @@ if authentication_status:
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#848884">{"Upload Shipment Instruction:"}</h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#6F8FAF">{"Upload Shipment Instruction:"}</h5>', unsafe_allow_html=True)
             with upload:
                 shipment_instructions = st.file_uploader("",key = 'ship_ins')
 
@@ -132,7 +140,7 @@ if authentication_status:
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#848884">{"Upload Warehouse Reports:"}<h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#6F8FAF">{"Upload Warehouse Reports:"}<h5>', unsafe_allow_html=True)
             with upload:
                 warehouse_reports = st.file_uploader("",key = 'ware_rep', accept_multiple_files=True)
 
@@ -140,7 +148,7 @@ if authentication_status:
             with text:
                 st.write("###")
                 st.write("###")
-                st.write(f'<h5 style="color:#848884"> {"Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
+                st.write(f'<h5 style="color:#6F8FAF"> {"Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
             with upload:
                 inventory_ledger = st.file_uploader("",key = 'inv_led')
             
