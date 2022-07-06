@@ -41,9 +41,8 @@ if authentication_status == None:
     st.warning("Please enter your username and Password")
 
 if authentication_status:
-    time.sleep(1)
+    time.sleep(2)
     def landing_page():
-    # Remove whitespace from the top of the page and sidebar
         st.markdown("""
                 <style>
                     .css-18e3th9 {
@@ -60,13 +59,13 @@ if authentication_status:
                         }
                 </style>
                 """, unsafe_allow_html=True)
-        logo = Image.open('images/reconcify_logo.png')
         hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             </style>
             """
+        logo = Image.open('images/reconcify_logo.png')
         st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
         Logo,emp = st.columns([1.5,4])
         with Logo:
