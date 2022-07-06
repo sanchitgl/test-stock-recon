@@ -4,8 +4,8 @@ virtualenv shipment_reco
 -Activate environment 
 source shipment_reco/bin/activate
 
-- run API
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+-run streamlit app
+streamlit run app.py
 
 - export dependencies
 pip3 freeze > requirements.txt
