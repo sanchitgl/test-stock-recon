@@ -19,24 +19,29 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 	# 	booking_files = os.listdir(input_path + '\\booking_instructions\\' + single_folder)
 	# 	for single_booking in booking_files:
 	#df = pd.read_excel(ship_instrutions)
-	df = ship_instrutions #####
-	df['BOOKING DATE'] = '2022_04_19'
-	df['BOOKING DATE'] = pd.to_datetime(df['BOOKING DATE'], format='%Y_%m_%d')
-	#print(df['BOOKING DATE'])
-	df.columns = df.columns.str.strip()
-	df.columns = df.columns.str.upper()
-	df = df[['FBA ID', 'SKU', 'CARTONS', 'QTY','BOOKING DATE']]
-	df['FBA ID'] = df['FBA ID'].astype(str)
-	df = df[df['FBA ID'].str.len() == 12]
-	df['SKU'] = df['SKU'].astype(str)
-	df['SKU'] = df['SKU'].replace(regex=True, to_replace=r'(\.0$)', value=r'')
-	df['SKU'] = df['SKU'].str.replace('_New', '')
-	df['SKU'] = df['SKU'].str.replace('_NEW', '')			
-	df['CARTONS'] = df['CARTONS'].astype(int)
-	df['QTY'] = df['QTY'].astype(int)
-	#booking = booking.append(df)
-	booking = df ####
-	#print(booking.columns)
+	booking = pd.DataFrame()
+	for ship_inst in ship_instrutions:
+		ship_inst_name = ship_inst.name
+		#print(ship_inst_name)
+		df = pd.read_excel(ship_inst) #####
+		#print(df)
+		df['BOOKING DATE'] = str(ship_inst_name.split('-')[0])
+		df['BOOKING DATE'] = pd.to_datetime(df['BOOKING DATE'], format='%Y_%m_%d')
+		#print(df['BOOKING DATE'])
+		df.columns = df.columns.str.strip()
+		df.columns = df.columns.str.upper()
+		df = df[['FBA ID', 'SKU', 'CARTONS', 'QTY','BOOKING DATE']]
+		df['FBA ID'] = df['FBA ID'].astype(str)
+		df = df[df['FBA ID'].str.len() == 12]
+		df['SKU'] = df['SKU'].astype(str)
+		df['SKU'] = df['SKU'].replace(regex=True, to_replace=r'(\.0$)', value=r'')
+		df['SKU'] = df['SKU'].str.replace('_New', '')
+		df['SKU'] = df['SKU'].str.replace('_NEW', '')			
+		df['CARTONS'] = df['CARTONS'].astype(int)
+		df['QTY'] = df['QTY'].astype(int)
+		#booking = booking.append(df)
+		booking = booking.append(df)
+		#print(booking.columns)
 
 	fba_list = list(set(booking['FBA ID'].to_list()))
 	dispatch_filenames = [f + '_ViewTransaction.xlsx' for f in fba_list]
@@ -46,7 +51,7 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 	#for single_dispatch in os.listdir(warehouse_reports):
 	for single_dispatch in warehouse_reports:
 		dispatch_file_name = single_dispatch.name
-		print(dispatch_file_name)
+		#print(dispatch_file_name)
 		#single_file = str(warehouse_reports +'/'+ single_dispatch)
 		if dispatch_file_name in dispatch_filenames:
 			#wb = openpyxl.load_workbook(single_file)

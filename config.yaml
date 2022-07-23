@@ -9,7 +9,7 @@ credentials:
       name: Rebecca Briggs
       password: '456' # To be replaced with hashed password
 cookie:
-  expiry_days: 0
+  expiry_days: 1
   key: some_signature_key
   name: some_cookie_name
 preauthorized:
