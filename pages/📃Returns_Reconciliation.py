@@ -91,7 +91,7 @@ if authentication_status:
 
     def file_upload_form():
         colour = "#89CFF0"
-        with st.form(key = 'ticker'):
+        with st.form(key = 'ticker',clear_on_submit=True):
             text, upload = st.columns([2.5,3]) 
             with text:
                 st.write("###")
