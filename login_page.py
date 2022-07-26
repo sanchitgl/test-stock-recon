@@ -3,10 +3,9 @@ import streamlit as st
 import yaml
 
 def login_status():
+    state = st.session_state
     with open('config.yaml') as file:
         config = yaml.safe_load(file)
-
-    placeholder = st.empty()
     
     authenticator = stauth.Authenticate(
         config['credentials'],
@@ -15,14 +14,31 @@ def login_status():
         config['cookie']['expiry_days'],
         config['preauthorized']
     )
+    if 'authentication_status' not in state:
+        state.authentication_status = False
 
+    if state.authentication_status:
+        authentication_status = state.authentication_status
+    else:
+        st.markdown('''
+        <style>
+        .css-9s5bis.edgvbvh3 {
+        display: none;
+        }
+        </style>
+        ''', unsafe_allow_html=True)
 
-    #authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "ship_recon", "admin")
-    with placeholder.container():
+        #authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "ship_recon", "admin")
+            #st.write('###')
         space, login, space = st.columns([1,3,1])
         with login:
             name, authentication_status, username = authenticator.login('Login', 'main')
+        state.authentication_status = authentication_status
+        
+    #placeholder.empty()
 
-    placeholder.empty()
+    if authentication_status:
+        authenticator.logout('Logout', 'sidebar')
+        #placeholder.empty()
 
     return authentication_status

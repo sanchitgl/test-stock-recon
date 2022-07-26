@@ -11,52 +11,57 @@ import time
 import plotly.graph_objects as go
 import base64
 from page_config import page_setup
+from login_page import login_status
 
 st.set_page_config(layout="wide",initial_sidebar_state ="collapsed")
 
 page_setup()
 
-st.markdown('''
-    <style>
-    .css-9s5bis.edgvbvh3 {
-    display: none;
-    }
-    </style>
-    ''', unsafe_allow_html=True)
+state = st.session_state
 
-names = ['admin', 'amit']
-usernames = ['admin', 'amit']
+authentication_status = login_status()
 
-with open('config.yaml') as file:
-    config = yaml.safe_load(file)
+# st.markdown('''
+#     <style>
+#     .css-9s5bis.edgvbvh3 {
+#     display: none;
+#     }
+#     </style>
+#     ''', unsafe_allow_html=True)
 
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
-)
+# with open('config.yaml') as file:
+#     config = yaml.safe_load(file)
 
-placeholder = st.empty()
+# authenticator = stauth.Authenticate(
+#     config['credentials'],
+#     config['cookie']['name'],
+#     config['cookie']['key'],
+#     config['cookie']['expiry_days'],
+#     config['preauthorized']
+# )
+# state.authenticator = authenticator
 
-#authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "ship_recon", "admin")
-with placeholder.container():
-    space, login, space = st.columns([1,3,1])
-    with login:
-        name, authentication_status, username = authenticator.login('Login', 'main')
+# #placeholder = st.empty()
 
+# #authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "ship_recon", "admin")
+# #with placeholder.container():
+# space, login, space = st.columns([1,3,1])
+# with login:
+#     name, authentication_status, username = authenticator.login('Login', 'main')
+# state.authentication_status
 
 if authentication_status == False:
-    st.error("Username/Password is incorrect")
+    space, login, space = st.columns([1,3,1])
+    with login:
+        st.error("Username/Password is incorrect")
 
 
 
 if authentication_status:
-    placeholder.empty()
-    authenticator.logout('Logout', 'sidebar')
+    #placeholder.empty()
+    #authenticator.logout('Logout', 'sidebar')
 
-    time.sleep(0.5)
+    time.sleep(0.1)
     def landing_page():
         st.markdown('''
         <style>
@@ -68,7 +73,6 @@ if authentication_status:
         #with title:
         # emp,title,emp = st.columns([2,2,2])
         # with title:
-        state = st.session_state
         if 'submit' not in state:
             state.submit= False
         if 'response' not in state:
@@ -82,42 +86,45 @@ if authentication_status:
             #print(warehouse_reports)
             #print(submit)
                 #print(shipment_instructions_df)
-            try:
-                delete_temp()
-            except:
-                print()
-            if inventory_ledger is not None:
-                inventory_ledger_df = pd.read_csv(inventory_ledger)
-            units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger_df)
-            state.response = [units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku]
-            
-            bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
-            ,['Short Units', short_units_received],['Units Recieved', units_received]]
-            #val_df = val_df.set_index
-            bar_df = pd.DataFrame(bar_data, columns=['Label', 'Units'])  
-            #bar_df = bar_df.set_index('Label')       
-            # bar_data = {
-            #     'Units Booked':units_booked,
-            #     'Excess Units Received': excess_units_received,
-            #     'Short Units Received': short_units_received,
-            #     'Units Recieved':units_received
-            # }
+            with st.spinner('Please wait'):
+                try:
+                    delete_temp()
+                except:
+                    print()
+                if inventory_ledger is not None:
+                    inventory_ledger_df = pd.read_csv(inventory_ledger)
+                units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger_df)
+                state.response = [units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku]
+                
+                bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
+                ,['Short Units', short_units_received],['Units Recieved', units_received]]
+                #val_df = val_df.set_index
+                bar_df = pd.DataFrame(bar_data, columns=['Label', 'Units'])  
+                #bar_df = bar_df.set_index('Label')       
+                # bar_data = {
+                #     'Units Booked':units_booked,
+                #     'Excess Units Received': excess_units_received,
+                #     'Short Units Received': short_units_received,
+                #     'Units Recieved':units_received
+                # }
 
-            pie_data = [['Matching SKUs',matching_sku],['Mismatching SKUs', mismatching_sku]]
-            pie_df = pd.DataFrame(pie_data, columns=['Label', 'Units']) 
-            #pie_df = pie_df.set_index('Label')    
-            with st.expander('Visualize Reconciliation Output'):
-                bar,pie = st.columns([1.2,1]) 
-                with bar:
-                    plot_waterfall_chart(units_booked, excess_units_received, short_units_received, units_received)
-                    #plot_bar_chart(bar_df,'Label','Units')
-                    #st.bar_chart(bar_df)
-                with pie:
-                    #st.bar_chart(pie_df)
-                    plot_pie_chart(matching_sku, mismatching_sku)
-            with open('temp/shipment_reco.xlsx', 'rb') as my_file:
-                click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
-                mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') 
+                pie_data = [['Matching SKUs',matching_sku],['Mismatching SKUs', mismatching_sku]]
+                pie_df = pd.DataFrame(pie_data, columns=['Label', 'Units']) 
+                #pie_df = pie_df.set_index('Label')    
+                with st.expander('Visualize Reconciliation Output'):
+                    bar,pie = st.columns([1.2,1]) 
+                    with bar:
+                        plot_waterfall_chart(units_booked, excess_units_received, short_units_received, units_received)
+                        #plot_bar_chart(bar_df,'Label','Units')
+                        #st.bar_chart(bar_df)
+                    with pie:
+                        #st.bar_chart(pie_df)
+                        plot_pie_chart(matching_sku, mismatching_sku)
+            emp, but, empty = st.columns([2.05,1.2,1.5]) 
+            with but:
+                with open('temp/shipment_reco.xlsx', 'rb') as my_file:
+                    click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
+                    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 #print(click) 
             #st.write(workbook) 
         else:
@@ -150,9 +157,11 @@ if authentication_status:
                         with pie:
                             #st.bar_chart(pie_df)
                             plot_pie_chart(matching_sku, mismatching_sku)
-                    with open('temp/shipment_reco.xlsx', 'rb') as my_file:
-                        click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
-                        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    emp, but, empty = st.columns([2.05,1.2,1.5]) 
+                    with but:
+                        with open('temp/shipment_reco.xlsx', 'rb') as my_file:
+                            click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
+                            mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                  
                 
     

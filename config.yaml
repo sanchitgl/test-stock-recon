@@ -7,7 +7,7 @@ credentials:
     rbriggs:
       email: rbriggs@gmail.com
       name: Rebecca Briggs
-      password: '456' # To be replaced with hashed password
+      password: '$2b$12$N7.rbdBYKsAcs9rquwjdXuTCKOAybBq.AOcWjzXGEWDkDI.zkJ8mK' # To be replaced with hashed password
 cookie:
   expiry_days: 1
   key: some_signature_key
