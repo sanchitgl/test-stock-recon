@@ -81,58 +81,22 @@ if authentication_status:
         #st.write('###')
         shipment_instructions, warehouse_reports, inventory_ledger, submit = file_upload_form()
         #print(warehouse_reports)
-        if submit:
-            state.submit = True
-            #print(warehouse_reports)
-            #print(submit)
-                #print(shipment_instructions_df)
-            with st.spinner('Please wait'):
-                try:
-                    delete_temp()
-                except:
-                    print()
-                if inventory_ledger is not None:
-                    inventory_ledger_df = pd.read_csv(inventory_ledger)
-                units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger_df)
-                state.response = [units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku]
-                
-                bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
-                ,['Short Units', short_units_received],['Units Recieved', units_received]]
-                #val_df = val_df.set_index
-                bar_df = pd.DataFrame(bar_data, columns=['Label', 'Units'])  
-                #bar_df = bar_df.set_index('Label')       
-                # bar_data = {
-                #     'Units Booked':units_booked,
-                #     'Excess Units Received': excess_units_received,
-                #     'Short Units Received': short_units_received,
-                #     'Units Recieved':units_received
-                # }
-
-                pie_data = [['Matching SKUs',matching_sku],['Mismatching SKUs', mismatching_sku]]
-                pie_df = pd.DataFrame(pie_data, columns=['Label', 'Units']) 
-                #pie_df = pie_df.set_index('Label')    
-                with st.expander('Visualize Reconciliation Output'):
-                    bar,pie = st.columns([1.2,1]) 
-                    with bar:
-                        plot_waterfall_chart(units_booked, excess_units_received, short_units_received, units_received)
-                        #plot_bar_chart(bar_df,'Label','Units')
-                        #st.bar_chart(bar_df)
-                    with pie:
-                        #st.bar_chart(pie_df)
-                        plot_pie_chart(matching_sku, mismatching_sku)
-            emp, but, empty = st.columns([2.05,1.2,1.5]) 
-            with but:
-                with open('temp/shipment_reco.xlsx', 'rb') as my_file:
-                    click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
-                    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                #print(click) 
-            #st.write(workbook) 
-        else:
-            if state.submit == True:
-                if state.response != {}:
-                    response = state.response
-                    units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = response
-                    #print("Units :" + str(units_booked))
+        try:
+            if submit:
+                state.submit = True
+                #print(warehouse_reports)
+                #print(submit)
+                    #print(shipment_instructions_df)
+                with st.spinner('Please wait'):
+                    try:
+                        delete_temp()
+                    except:
+                        print()
+                    if inventory_ledger is not None:
+                        inventory_ledger_df = pd.read_csv(inventory_ledger)
+                    units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger_df)
+                    state.response = [units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku]
+                    
                     bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
                     ,['Short Units', short_units_received],['Units Recieved', units_received]]
                     #val_df = val_df.set_index
@@ -157,11 +121,50 @@ if authentication_status:
                         with pie:
                             #st.bar_chart(pie_df)
                             plot_pie_chart(matching_sku, mismatching_sku)
-                    emp, but, empty = st.columns([2.05,1.2,1.5]) 
-                    with but:
-                        with open('temp/shipment_reco.xlsx', 'rb') as my_file:
-                            click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
-                            mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                emp, but, empty = st.columns([2.05,1.2,1.5]) 
+                with but:
+                    with open('temp/shipment_reco.xlsx', 'rb') as my_file:
+                        click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
+                        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    #print(click) 
+                #st.write(workbook) 
+            else:
+                if state.submit == True:
+                    if state.response != {}:
+                        response = state.response
+                        units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = response
+                        #print("Units :" + str(units_booked))
+                        bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
+                        ,['Short Units', short_units_received],['Units Recieved', units_received]]
+                        #val_df = val_df.set_index
+                        bar_df = pd.DataFrame(bar_data, columns=['Label', 'Units'])  
+                        #bar_df = bar_df.set_index('Label')       
+                        # bar_data = {
+                        #     'Units Booked':units_booked,
+                        #     'Excess Units Received': excess_units_received,
+                        #     'Short Units Received': short_units_received,
+                        #     'Units Recieved':units_received
+                        # }
+
+                        pie_data = [['Matching SKUs',matching_sku],['Mismatching SKUs', mismatching_sku]]
+                        pie_df = pd.DataFrame(pie_data, columns=['Label', 'Units']) 
+                        #pie_df = pie_df.set_index('Label')    
+                        with st.expander('Visualize Reconciliation Output'):
+                            bar,pie = st.columns([1.2,1]) 
+                            with bar:
+                                plot_waterfall_chart(units_booked, excess_units_received, short_units_received, units_received)
+                                #plot_bar_chart(bar_df,'Label','Units')
+                                #st.bar_chart(bar_df)
+                            with pie:
+                                #st.bar_chart(pie_df)
+                                plot_pie_chart(matching_sku, mismatching_sku)
+                        emp, but, empty = st.columns([2.05,1.2,1.5]) 
+                        with but:
+                            with open('temp/shipment_reco.xlsx', 'rb') as my_file:
+                                click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
+                                mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        except:
+            st.error("Run failed, kindly check if the inputs are valid")
                  
                 
     

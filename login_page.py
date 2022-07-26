@@ -1,6 +1,7 @@
 import streamlit_authenticator as stauth
 import streamlit as st
 import yaml
+import time
 
 def login_status():
     state = st.session_state
@@ -33,6 +34,7 @@ def login_status():
         space, login, space = st.columns([1,3,1])
         with login:
             name, authentication_status, username = authenticator.login('Login', 'main')
+            time.sleep(0.2)
         state.authentication_status = authentication_status
         
     #placeholder.empty()
