@@ -2,7 +2,7 @@ import pickle
 from pathlib import Path 
 import streamlit_authenticator as stauth
 
-password = "456"
+password = "amit"
 
 hashed_passwords = stauth.Hasher([password]).generate()
 

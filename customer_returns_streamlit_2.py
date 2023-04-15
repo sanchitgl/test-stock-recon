@@ -58,6 +58,9 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	# payment_refund_merged.set_index(['order-id', 'sku', 'quantity-refund', 'total' 'ful'], inplace=True)
 	print("------------------------")
 	print(payment_refund_merged)
+
+	payment_refund_merged = payment_refund_merged.reset_index()
+	payment_refund_merged_renamed = payment_refund_merged.rename(columns={'order-id': 'Order ID', 'sku': 'SKU', 'quantity-refund': 'Refund Quantity', 'total': 'Refund Amount', 'quantity-returns': 'Customer Returns', 'Returned to Inventory': 'Added to Inventory'})
 	payment_refund_merged.to_excel(data_to_excel, sheet_name='1. Refunds vs Returns')
 	# data_to_excel.save()
 	# sys.exit()
@@ -107,6 +110,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	# print(payment_reimbursed.info())
 
 	payment_reimbursed_grouped_to_excel = payment_reimbursed_grouped.drop(['status', 'fulfillment-center-id', 'quantity-returns'], axis=1) 
+	payment_reimbursed_grouped_to_excel = payment_reimbursed_grouped_to_excel.rename(columns={'order-id': 'Order ID', 'sku': 'SKU', 'total': 'Refund Amount', 'Reimbursed': 'Reimbursed Quantity', 'amount-total': 'Reimbursed Amount', 'quantity-reimbursed-cash': 'Cash Reimbursement', 'quantity-reimbursed-inventory': 'Inventory Reimbursement', 'quantity-reimbursed-total': 'Total Reimbursement', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})
 	payment_reimbursed_grouped_to_excel.to_excel(data_to_excel, sheet_name='2. Returns vs Reimbursements', index=False)
 	# data_to_excel.save()
 	# sys.exit()
@@ -135,6 +139,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_reimbursed_cash['amount-difference'] = payment_reimbursed_cash['amount-total'] - payment_reimbursed_cash['amount-settled']
 	payment_reimbursed_cash = payment_reimbursed_cash[['order-id', 'sku', 'quantity-reimbursed-cash', 'amount-total', 'quantity-settled', 'amount-settled', 'quantity-difference', 'amount-difference']]
 
+	payment_reimbursed_cash = payment_reimbursed_cash.rename(columns={'order-id': 'Order ID', 'sku': 'SKU', 'quantity-reimbursed-cash': 'Quantity Reimbursed', 'amount-total': 'Amount Reimbursed', 'quantity-settled': 'Quantity Settled', 'amount-settled': 'Amount Settled', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})	
 	payment_reimbursed_cash.to_excel(data_to_excel, sheet_name='3. Cash Reimbursement', index=False)
 	# print(payment_reimbursed_cash)
 
@@ -196,6 +201,10 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_inventory_datewise['quantity-difference'] = np.where(payment_inventory_datewise['Quantity'] == 1, 0, 1)
 	payment_inventory_datewise['amount-difference'] = np.where(payment_inventory_datewise['Quantity'] == 1, 0, payment_inventory_datewise['total'])
 	# payment_inventory_datewise = payment_inventory_datewise[['sku', 'fulfillment-center-id', 'return-date_x', '']]
+
+	payment_inventory_datewise['return-date'] = payment_inventory_datewise['return-date'].dt.strftime('%m/%d/%Y')
+	payment_inventory_datewise['Date'] = payment_inventory_datewise['Date'].dt.strftime('%m/%d/%Y')
+	payment_inventory_datewise = payment_inventory_datewise.rename(columns={'sku': 'SKU', 'fulfillment-center-id': 'Fulfillment Center', 'return-date': 'Return Date', 'quantity-returns': 'Return Quantity', 'total': 'Amount', 'Date': 'Date added to Inventory', 'Quantity': 'Quantity Added', 'date_difference': 'Days Difference', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})
 	payment_inventory_datewise.to_excel(data_to_excel, sheet_name='4. Returned to Inventory', index=False)
 
 	#------------------------------------Step 5-----------------------------------------------------
@@ -252,9 +261,167 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_reimbursed_inventory['quantity-difference'] = np.where(payment_reimbursed_inventory['Quantity'] == 1, 0, 1)
 	payment_reimbursed_inventory['amount-difference'] = np.where(payment_reimbursed_inventory['Quantity'] == 1, 0, payment_reimbursed_inventory['total'])
 
+	payment_reimbursed_inventory = payment_reimbursed_inventory.rename(columns={'sku': 'SKU', 'fulfillment-center-id': 'Fulfillment Center', 'Reimbursed': 'Quantity', 'total': 'Amount', 'approval-date': 'Approval Date', 'Date': 'Received Date', 'Quantity': 'Quantity Received', 'date_difference': 'Days Difference', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})
+	payment_reimbursed_inventory = payment_reimbursed_inventory[['SKU', 'Fulfillment Center', 'Approval Date', 'Quantity', 'Amount', 'Quantity Received', 'Received Date', 'Days Difference', 'Quantity Difference', 'Amount Difference']]
+	payment_reimbursed_inventory['Approval Date'] = payment_reimbursed_inventory['Approval Date'].dt.strftime('%m/%d/%Y')
+	payment_reimbursed_inventory['Received Date'] = payment_reimbursed_inventory['Received Date'].dt.strftime('%m/%d/%Y')
 	payment_reimbursed_inventory.to_excel(data_to_excel, sheet_name='5. Inventory Reimbursement', index=False)
 
+#------------------------------Formatting-------------------------------------------
+	workbook = data_to_excel.book
+	date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+	number_format = workbook.add_format({'num_format': '#,##0'})
+	decimal_format = workbook.add_format({'num_format': '#,##0.00'})
+	fail_format = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})
+	pass_format = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'})
+	center_format = workbook.add_format()
+	center_format.set_align('center')
+	right_format = workbook.add_format()
+	right_format.set_align('center')
+
+	sheet1 = data_to_excel.sheets['1. Refunds vs Returns']
+	sheet2 = data_to_excel.sheets['2. Returns vs Reimbursements']
+	sheet3 = data_to_excel.sheets['3. Cash Reimbursement']
+	sheet4 = data_to_excel.sheets['4. Returned to Inventory']
+	sheet5 = data_to_excel.sheets['5. Inventory Reimbursement']
+
+	# sheet1.set_column('A:A', 22, center_format)
+	sheet1.set_column('A:B', 24, center_format)
+	sheet1.set_column('C:C', 24, number_format)
+	sheet1.set_column('D:D', 24, decimal_format)
+	sheet1.set_column('E:H', 24, number_format)
+	sheet1.set_column('I:I', 24, decimal_format)
+
+	sheet2.set_column('A:B', 24, center_format)
+	sheet2.set_column('C:C', 24, decimal_format)
+	sheet2.set_column('D:D', 24, number_format)
+	sheet2.set_column('E:E', 24, decimal_format)
+	sheet2.set_column('F:I', 24, number_format)
+	sheet2.set_column('J:J', 24, decimal_format)
+
+	sheet3.set_column('A:B', 24, center_format)
+	sheet3.set_column('C:C', 24, number_format)
+	sheet3.set_column('D:D', 24, decimal_format)
+	sheet3.set_column('E:E', 24, number_format)
+	sheet3.set_column('F:F', 24, decimal_format)
+	sheet3.set_column('G:G', 24, number_format)
+	sheet3.set_column('H:H', 24, decimal_format)
+
+	sheet4.set_column('A:C', 24, center_format)
+	sheet4.set_column('D:D', 24, number_format)
+	sheet4.set_column('E:E', 24, decimal_format)
+	sheet4.set_column('F:F', 24, center_format)
+	sheet4.set_column('G:I', 24, number_format)
+	sheet4.set_column('J:J', 24, decimal_format)
+
+	sheet5.set_column('A:C', 24, center_format)
+	sheet5.set_column('D:D', 24, number_format)
+	sheet5.set_column('E:E', 24, decimal_format)
+	sheet5.set_column('F:F', 24, number_format)
+	sheet5.set_column('G:G', 24, center_format)
+	sheet5.set_column('H:I', 24, number_format)
+	sheet5.set_column('J:J', 24, decimal_format)
+
+	sheet1.conditional_format('H2:I'+str(len(payment_refund_merged_renamed)+1), {'type': 'cell', 'criteria': '!=', 'value': 0, 'format': fail_format})
+	sheet1.conditional_format('H2:I'+str(len(payment_refund_merged_renamed)+1), {'type': 'cell', 'criteria': '=', 'value': 0, 'format': pass_format})
+
+	sheet2.conditional_format('I2:J'+str(len(payment_reimbursed_grouped_to_excel)+1), {'type': 'cell', 'criteria': '!=', 'value': 0, 'format': fail_format})
+	sheet2.conditional_format('I2:J'+str(len(payment_reimbursed_grouped_to_excel)+1), {'type': 'cell', 'criteria': '=', 'value': 0, 'format': pass_format})
+
+	sheet3.conditional_format('G2:H'+str(len(payment_reimbursed_cash)+1), {'type': 'cell', 'criteria': '!=', 'value': 0, 'format': fail_format})
+	sheet3.conditional_format('G2:H'+str(len(payment_reimbursed_cash)+1), {'type': 'cell', 'criteria': '=', 'value': 0, 'format': pass_format})
+
+	sheet4.conditional_format('I2:J'+str(len(payment_inventory_datewise)+1), {'type': 'cell', 'criteria': '!=', 'value': 0, 'format': fail_format})
+	sheet4.conditional_format('I2:J'+str(len(payment_inventory_datewise)+1), {'type': 'cell', 'criteria': '=', 'value': 0, 'format': pass_format})
+
+	sheet5.conditional_format('I2:J'+str(len(payment_reimbursed_inventory)+1), {'type': 'cell', 'criteria': '!=', 'value': 0, 'format': fail_format})
+	sheet5.conditional_format('I2:J'+str(len(payment_reimbursed_inventory)+1), {'type': 'cell', 'criteria': '=', 'value': 0, 'format': pass_format})
+
 	data_to_excel.save()
+
+	workbook = openpyxl.load_workbook('temp/customer_returns_reco.xlsx')
+	sheet1 = workbook['1. Refunds vs Returns']
+	sheet2 = workbook['2. Returns vs Reimbursements']
+	sheet3 = workbook['3. Cash Reimbursement']
+	sheet4 = workbook['4. Returned to Inventory']
+	sheet5 = workbook['5. Inventory Reimbursement']
+
+	# print(payment_refund_merged.info())
+	# sys.exit()
+
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=3).value = payment_refund_merged_renamed['Refund Quantity'].sum()
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=4).value = payment_refund_merged_renamed['Refund Amount'].sum()
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=5).value = payment_refund_merged_renamed['Customer Returns'].sum()			
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=6).value = payment_refund_merged_renamed['Reimbursed'].sum()
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=7).value = payment_refund_merged_renamed['Added to Inventory'].sum()
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=8).value = payment_refund_merged_renamed['Quantity Difference'].sum()
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=9).value = payment_refund_merged_renamed['Amount Difference'].sum()
+
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=3).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=4).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=5).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=6).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=7).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=8).font = openpyxl.styles.Font(bold=True)
+	sheet1.cell(row=len(payment_refund_merged_renamed)+2, column=9).font = openpyxl.styles.Font(bold=True)
+
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=3).value = payment_reimbursed_grouped_to_excel['Refund Amount'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=4).value = payment_reimbursed_grouped_to_excel['Reimbursed Quantity'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=5).value = payment_reimbursed_grouped_to_excel['Reimbursed Amount'].sum()			
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=6).value = payment_reimbursed_grouped_to_excel['Cash Reimbursement'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=7).value = payment_reimbursed_grouped_to_excel['Inventory Reimbursement'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=8).value = payment_reimbursed_grouped_to_excel['Total Reimbursement'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=9).value = payment_reimbursed_grouped_to_excel['Quantity Difference'].sum()
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=10).value = payment_reimbursed_grouped_to_excel['Amount Difference'].sum()
+
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=3).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=4).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=5).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=6).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=7).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=8).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=9).font = openpyxl.styles.Font(bold=True)
+	sheet2.cell(row=len(payment_reimbursed_grouped_to_excel)+2, column=10).font = openpyxl.styles.Font(bold=True)
+
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=3).value = payment_reimbursed_cash['Quantity Reimbursed'].sum()
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=4).value = payment_reimbursed_cash['Amount Reimbursed'].sum()
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=5).value = payment_reimbursed_cash['Quantity Settled'].sum()			
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=6).value = payment_reimbursed_cash['Amount Settled'].sum()
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=7).value = payment_reimbursed_cash['Quantity Difference'].sum()
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=8).value = payment_reimbursed_cash['Amount Difference'].sum()
+
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=3).font = openpyxl.styles.Font(bold=True)
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=4).font = openpyxl.styles.Font(bold=True)
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=5).font = openpyxl.styles.Font(bold=True)
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=6).font = openpyxl.styles.Font(bold=True)
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=7).font = openpyxl.styles.Font(bold=True)
+	sheet3.cell(row=len(payment_reimbursed_cash)+2, column=8).font = openpyxl.styles.Font(bold=True)
+
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=4).value = payment_inventory_datewise['Return Quantity'].sum()
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=5).value = payment_inventory_datewise['Amount'].sum()
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=7).value = payment_inventory_datewise['Quantity Added'].sum()			
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=9).value = payment_inventory_datewise['Quantity Difference'].sum()
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=10).value = payment_inventory_datewise['Amount Difference'].sum()
+
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=4).font = openpyxl.styles.Font(bold=True)
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=5).font = openpyxl.styles.Font(bold=True)
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=7).font = openpyxl.styles.Font(bold=True)
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=9).font = openpyxl.styles.Font(bold=True)
+	sheet4.cell(row=len(payment_inventory_datewise)+2, column=10).font = openpyxl.styles.Font(bold=True)
+
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=4).value = payment_reimbursed_inventory['Quantity'].sum()
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=5).value = payment_reimbursed_inventory['Amount'].sum()
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=6).value = payment_reimbursed_inventory['Quantity Received'].sum()			
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=9).value = payment_reimbursed_inventory['Quantity Difference'].sum()
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=10).value = payment_reimbursed_inventory['Amount Difference'].sum()
+
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=4).font = openpyxl.styles.Font(bold=True)
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=5).font = openpyxl.styles.Font(bold=True)
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=6).font = openpyxl.styles.Font(bold=True)
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=9).font = openpyxl.styles.Font(bold=True)
+	sheet5.cell(row=len(payment_reimbursed_inventory)+2, column=10).font = openpyxl.styles.Font(bold=True)
+
+	workbook.save('temp/customer_returns_reco.xlsx')
 
 	return
 

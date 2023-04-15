@@ -5,7 +5,7 @@ virtualenv shipment_reco
 source shipment_reco/bin/activate
 
 -run streamlit app
-streamlit run 📃Shipment_Reconciliation.py
+streamlit run 📃Shipments_-_3P_Warehouses.py
 
 - export dependencies
 pip3 freeze > requirements.txt

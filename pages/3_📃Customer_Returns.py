@@ -1,7 +1,7 @@
 import streamlit as st
 from page_config import page_setup
 import pandas as pd
-from customer_returns_streamlit import reconcile
+from customer_returns_streamlit_2 import reconcile
 import os
 import streamlit_authenticator as stauth
 import pickle 
@@ -44,50 +44,50 @@ if authentication_status:
             state.submit_cus= False
         if 'response_cus' not in state:
             state.response_cus = []
-        st.markdown("<h2 style='text-align: center; padding:0'>Customer Returns Reconciliation</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; padding:0'>Customer Returns</h2>", unsafe_allow_html=True)
         #st.write('###')
         payment_report, returns_report, reimbursement_report, inventory_ledger, submit = file_upload_form()
         #print(warehouse_reports)
-        try:
-            if submit:
-                state.submit_cus = True
-                #print(warehouse_reports)
-                #print(submit)
-                    #print(shipment_instructions_df)
-                with st.spinner('Please wait'):
-                    try:
-                        delete_temp()
-                    except:
-                        print()
-                    if payment_report is not None:
-                        payment_report_df = pd.read_csv(payment_report,encoding='latin-1')
-                    if returns_report is not None:
-                        returns_report_df = pd.read_csv(returns_report,encoding='latin-1')
-                    if reimbursement_report is not None:
-                        reimbursement_report_df = pd.read_csv(reimbursement_report,encoding='latin-1')
-                    if inventory_ledger is not None:
-                        inventory_ledger_df = pd.read_csv(inventory_ledger,encoding='latin-1')
-                    reconcile(payment_report_df, returns_report_df, reimbursement_report_df, inventory_ledger_df)
-                #state.response = [payment_report_df, returns_report_df, reimbursement_report, inventory_ledger_df]
-                emp, but, empty = st.columns([2.05,1.2,1.5])
+        #try:
+        if submit:
+            state.submit_cus = True
+            #print(warehouse_reports)
+            #print(submit)
+                #print(shipment_instructions_df)
+            with st.spinner('Please wait'):
+                try:
+                    delete_temp()
+                except:
+                    print()
+                if payment_report is not None:
+                    payment_report_df = pd.read_csv(payment_report,encoding='latin-1')
+                if returns_report is not None:
+                    returns_report_df = pd.read_csv(returns_report,encoding='latin-1')
+                if reimbursement_report is not None:
+                    reimbursement_report_df = pd.read_csv(reimbursement_report,encoding='latin-1')
+                if inventory_ledger is not None:
+                    inventory_ledger_df = pd.read_csv(inventory_ledger,encoding='latin-1')
+                reconcile(payment_report_df, returns_report_df, reimbursement_report_df, inventory_ledger_df)
+            #state.response = [payment_report_df, returns_report_df, reimbursement_report, inventory_ledger_df]
+            emp, but, empty = st.columns([2.05,1.2,1.5])
+            with but:
+                st.write("###")
+                with open('temp/customer_returns_reco.xlsx', 'rb') as my_file:
+                    click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'customer_returns_reco.xlsx', 
+                    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') 
+                    #print(click) 
+            #st.write(workbook) 
+
+        else:
+            if state.submit_cus == True:
+                emp, but, empty = st.columns([2.05,1.2,1.5]) 
                 with but:
                     st.write("###")
                     with open('temp/customer_returns_reco.xlsx', 'rb') as my_file:
                         click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'customer_returns_reco.xlsx', 
-                        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') 
-                        #print(click) 
-                #st.write(workbook) 
-
-            else:
-                if state.submit_cus == True:
-                    emp, but, empty = st.columns([2.05,1.2,1.5]) 
-                    with but:
-                        st.write("###")
-                        with open('temp/customer_returns_reco.xlsx', 'rb') as my_file:
-                            click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'customer_returns_reco.xlsx', 
-                            mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        except:
-            st.error("Run failed, kindly check if the inputs are valid")
+                        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        #except:
+        #    st.error("Run failed, kindly check if the inputs are valid")
 
     def delete_temp():
         os.remove("temp/customer_returns_reco.xlsx")
