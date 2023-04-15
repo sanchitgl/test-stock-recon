@@ -2,4 +2,4 @@
 base="light"
 
 [server]
-maxUploadSize = 300
+maxUploadSize = 800
