@@ -124,7 +124,7 @@ if authentication_status:
                 emp, but, empty = st.columns([2.05,1.2,1.5]) 
                 with but:
                     with open('temp/shipment_reco.xlsx', 'rb') as my_file:
-                        click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipment_reco.xlsx', 
+                        click = st.download_button(label = 'Download in Excel', data = my_file, file_name = 'shipments_3p_warehouses.xlsx', 
                         mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                     #print(click) 
                 #st.write(workbook) 

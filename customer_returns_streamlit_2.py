@@ -61,7 +61,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 
 	payment_refund_merged = payment_refund_merged.reset_index()
 	payment_refund_merged_renamed = payment_refund_merged.rename(columns={'order-id': 'Order ID', 'sku': 'SKU', 'quantity-refund': 'Refund Quantity', 'total': 'Refund Amount', 'quantity-returns': 'Customer Returns', 'Returned to Inventory': 'Added to Inventory'})
-	payment_refund_merged.to_excel(data_to_excel, sheet_name='1. Refunds vs Returns')
+	payment_refund_merged_renamed.to_excel(data_to_excel, sheet_name='1. Refunds vs Returns', index=False)
 	# data_to_excel.save()
 	# sys.exit()
 
