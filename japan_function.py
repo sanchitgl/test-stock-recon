@@ -3,12 +3,13 @@ import os
 import sys
 import numpy as np
 import openpyxl
+import datetime # New
 
 def reconcile(packing_lists, inventory_ledger):
 	# packing_list_path = 'C:\\Users\\amitu\\OneDrive\\quantuitix\\projects\\reconcify\\poc\\nmkcdd\\japan\\input_files\\packing_list'
 	# packing_list_files = os.listdir(packing_list_path)
 	# # print(packing_list_files)
-
+	print('start')
 	packing_list = pd.DataFrame()
 	for file in packing_lists:
 		wb = openpyxl.load_workbook(file, data_only=True)
@@ -39,8 +40,13 @@ def reconcile(packing_lists, inventory_ledger):
 
 	# inventory_ledger_path = 'C:\\Users\\amitu\\OneDrive\\quantuitix\\projects\\reconcify\\poc\\nmkcdd\\japan\\input_files\\inventory_ledger'
 	# inventory_ledger_file = os.listdir(inventory_ledger_path)
-	inventory_ledger = pd.read_csv(inventory_ledger)
-	inventory_receipts = inventory_ledger[inventory_ledger['Event Type'] == 'Receipts']
+	# inventory_ledger = pd.read_csv(inventory_ledger) # Delete
+	inventory = pd.DataFrame() # New
+	for single_inventory in inventory_ledger: # New
+		single_inventory_df = pd.read_csv(single_inventory) # New
+		inventory = inventory.append(single_inventory_df) # New
+
+	inventory_receipts = inventory[inventory['Event Type'] == 'Receipts'] # New
 	inventory_receipts['MSKU'] = inventory_receipts['MSKU'].astype(str)
 	# print(inventory_receipts)
 
@@ -55,6 +61,7 @@ def reconcile(packing_lists, inventory_ledger):
 	# print(packing_list_grouped)
 	# sys.exit()
 	# print(inventory_receipts_grouped[''])
+	# inventory_receipts_grouped.to_csv('C:\\Users\\amitu\\OneDrive\\quantuitix\\projects\\reconcify\\poc\\nmkcdd\\demo\\Shipment - Vendors\\inventory_receipts_grouped.csv') # New
 
 	summary = pd.merge(packing_list_grouped, inventory_receipts_grouped, on=['FBA ID', 'SKU ID'], how='left')
 	summary['Qty: Packing List'].fillna(0, inplace=True)
@@ -70,7 +77,8 @@ def reconcile(packing_lists, inventory_ledger):
 
 	detailed = pd.merge(packing_list_grouped2, inventory_receipts_grouped2, on=['FBA ID', 'SKU ID'], how='left')
 	detailed['Transit Days'] = detailed['Receipt Date'] - detailed['BL Date']
-	detailed['BL Date'] = detailed['BL Date'].dt.strftime('%Y-%m-%d')
+	if detailed['BL Date'].dtype == datetime: # New
+		detailed['BL Date'] = detailed['BL Date'].dt.strftime('%Y-%m-%d')
 	detailed['Receipt Date'] = detailed['Receipt Date'].dt.strftime('%Y-%m-%d')
 	detailed['Qty: Packing List'].fillna(0, inplace=True)
 	detailed['Qty: Inv Ledger'].fillna(0, inplace=True)
@@ -86,7 +94,11 @@ def reconcile(packing_lists, inventory_ledger):
 
 	writer = pd.ExcelWriter('temp/fba_reco_japan.xlsx')
 	summary.to_excel(writer, sheet_name='SKU-wise')
-	detailed.to_excel(writer, sheet_name='SKU-wise Date-wise')
+	if len(detailed) > 0: # New
+		detailed.to_excel(writer, sheet_name='SKU-wise Date-wise')
+	else:
+		blank = pd.DataFrame()
+		blank.to_excel(writer, sheet_name='SKU-wise Date-wise')
 
 	workbook = writer.book
 	fail_format = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})

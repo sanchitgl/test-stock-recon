@@ -14,14 +14,18 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	#--------------------------------------Step 1------------------------------------------------
 	payment = payment_report
 	payment_refund = payment[payment['type'] == 'Refund']
+	payment_refund = payment_refund.rename(columns={list(payment_refund)[0]: 'date/time'})
+	# print(payment_refund.info())
+	# payment_refund.columns = ['date/time', 'settlement id', 'type', 'order id', 'sku', 'description', 'quantity', 'marketplace', 'account type', 'fulfillment', 'order city', 'order state', 'order postal', 'tax collection model', 'product sales', 'product sales tax', 'shipping credits', 'shipping credits tax', 'gift wrap credits', 'giftwrap credits tax', 'promotional rebates', 'promotional rebates tax', 'marketplace withheld tax', 'selling fees', 'fba fees', 'other transaction fees', 'other', 'total']
 	payment_refund['month'] = payment_refund['date/time'].str[0:3]
-	payment_refund = payment_refund[payment_refund['month'] == 'Feb']
+	# payment_refund = payment_refund[payment_refund['month'] == 'Feb'] # New
 	# payment_refund['date/time'] = pd.to_datetime(payment_refund['date/time'].apply(dateparser.parse), utc=True)
 	payment_refund['sku'].fillna('Not Available', inplace=True)
 	payment_refund['sku'] = payment_refund['sku'].astype(str)
 	payment_refund['sku'] = payment_refund['sku'].str.replace('_New', '')
 	payment_refund['sku'] = payment_refund['sku'].str.replace('_NEW', '')
 	payment_refund['sku'] = np.where(payment_refund['sku'].str.len() > 13, payment_refund['sku'].str[8:20], payment_refund['sku'])
+	payment_refund['sku'] = "SKU-" + payment_refund['sku'] # New
 	payment_refund['total'] = -payment_refund['total'].astype(float)
 	payment_refund = payment_refund[['date/time', 'order id', 'sku', 'quantity', 'total']].rename(columns={'order id': 'order-id', 'quantity': 'quantity-refund'})
 	payment_refund = payment_refund.groupby(['order-id', 'sku']).agg({'quantity-refund': 'sum', 'total': 'sum'}).reset_index()
@@ -35,6 +39,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	customer_returns['sku'] = customer_returns['sku'].str.replace('_New', '')
 	customer_returns['sku'] = customer_returns['sku'].str.replace('_NEW', '')
 	customer_returns['sku'] = np.where(customer_returns['sku'].str.len() > 13, customer_returns['sku'].str[8:20], customer_returns['sku'])
+	customer_returns['sku'] = "SKU-" + customer_returns['sku'] # New
 	customer_returns_grouped = customer_returns.groupby(['order-id', 'sku', 'status']).agg({'quantity-returns': 'sum'}).reset_index()
 
 	payment_refund_merged = payment_refund.merge(customer_returns_grouped, on=['order-id', 'sku'], how='left')
@@ -90,13 +95,12 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	reimbursement['sku'] = reimbursement['sku'].str.replace('_New', '')
 	reimbursement['sku'] = reimbursement['sku'].str.replace('_NEW', '')
 	reimbursement['sku'] = np.where(reimbursement['sku'].str.len() > 13, reimbursement['sku'].str[8:20], reimbursement['sku'])
+	reimbursement['sku'] = "SKU-" + reimbursement['sku'] # New
 	reimbursement = reimbursement[['approval-date', 'amazon-order-id', 'sku', 'amount-total', 'quantity-reimbursed-cash', 'quantity-reimbursed-inventory', 'quantity-reimbursed-total']].rename(columns={'amazon-order-id': 'order-id'})
 	reimbursement_grouped = reimbursement.groupby(['order-id', 'sku']).agg({'amount-total': 'sum', 'quantity-reimbursed-cash': 'sum', 'quantity-reimbursed-inventory': 'sum', 'quantity-reimbursed-total': 'sum'})
 	# reimbursement.to_csv('reimbursement.csv')
 
-
 	payment_reimbursed_grouped = payment_reimbursed.merge(reimbursement_grouped, on=['order-id', 'sku'], how='left')
-
 
 	# payment_reimbursed_grouped.drop(['status', 'Quantity Difference', 'Amount Difference'], axis=1, inplace=True)
 	payment_reimbursed_grouped['amount-total'].fillna(0, inplace=True)
@@ -125,6 +129,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_returns['sku'] = payment_returns['sku'].str.replace('_New', '')
 	payment_returns['sku'] = payment_returns['sku'].str.replace('_NEW', '')
 	payment_returns['sku'] = np.where(payment_returns['sku'].str.len() > 13, payment_returns['sku'].str[8:20], payment_returns['sku'])
+	payment_returns['sku'] = "SKU-" + payment_returns['sku'] # New
 	payment_returns['total'] = payment_returns['total'].astype(float)
 	payment_returns['quantity'].fillna(0, inplace=True)
 	payment_returns['total'].fillna(0, inplace=True)
@@ -165,11 +170,18 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	# sys.exit()
 
 	inventory = inventory_ledger
+
+	# inventory = pd.DataFrame() # New
+	# for single_inventory in inventory_ledger: # New
+	# 	single_inventory_df = pd.read_csv(single_inventory) # New
+	# 	inventory = inventory.append(single_inventory_df) # New
+
 	inventory = inventory[(inventory['Event Type'] == 'CustomerReturns') & (inventory['Disposition'] == 'SELLABLE')]
 	inventory = inventory[['Date', 'MSKU', 'Quantity', 'Fulfillment Center']].rename(columns={'MSKU': 'sku', 'Fulfillment Center': 'fulfillment-center-id'})
-	inventory['Date'] = pd.to_datetime(inventory['Date'], format='%m/%d/%Y')
+	inventory['Date'] = pd.to_datetime(inventory['Date'])#, format='%m/%d/%Y')
 	inventory['sku'] = np.where(inventory['sku'].str[0:4] == 'amzn', inventory['sku'].str[8:20], inventory['sku'])
 	inventory['sku'] = inventory['sku'].astype(str).str[0:12]
+	inventory['sku'] = "SKU-" + inventory['sku'] # New
 	inventory = inventory.loc[inventory.index.repeat(inventory['Quantity'])].reset_index(drop=True)
 	inventory['Quantity'] = 1
 
@@ -189,7 +201,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	result_reset1 = result_reset1[result_reset1['date_difference'] >= datetime.timedelta(days=0)]
 	result_reset1.sort_values(by=['date_difference', 'level_0'], inplace=True)
 
-	returns1 = pd.DataFrame()
+	returns1 = pd.DataFrame(columns=['level_0', 'Date', 'Quantity', 'date_difference']) # New
 	while len(result_reset1) > 0:
 		returns1 = returns1.append(result_reset1.iloc[0])
 		result_reset1 = result_reset1[(result_reset1['level_0'] != result_reset1['level_0'].iloc[0]) & (result_reset1['level_1'] != result_reset1['level_1'].iloc[0])]
@@ -203,7 +215,8 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	# payment_inventory_datewise = payment_inventory_datewise[['sku', 'fulfillment-center-id', 'return-date_x', '']]
 
 	payment_inventory_datewise['return-date'] = payment_inventory_datewise['return-date'].dt.strftime('%m/%d/%Y')
-	payment_inventory_datewise['Date'] = payment_inventory_datewise['Date'].dt.strftime('%m/%d/%Y')
+	if payment_inventory_datewise['Date'].dtype == datetime: # New
+		payment_inventory_datewise['Date'] = payment_inventory_datewise['Date'].dt.strftime('%m/%d/%Y')
 	payment_inventory_datewise = payment_inventory_datewise.rename(columns={'sku': 'SKU', 'fulfillment-center-id': 'Fulfillment Center', 'return-date': 'Return Date', 'quantity-returns': 'Return Quantity', 'total': 'Amount', 'Date': 'Date added to Inventory', 'Quantity': 'Quantity Added', 'date_difference': 'Days Difference', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})
 	payment_inventory_datewise.to_excel(data_to_excel, sheet_name='4. Returned to Inventory', index=False)
 
@@ -215,7 +228,6 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_reimbursed_datewise = payment_reimbursed.merge(reimbursement_datewise, on=['order-id', 'sku'], how='left')
 	payment_reimbursed_datewise.drop('status', axis=1, inplace=True)
 	payment_reimbursed_datewise['quantity-reimbursed-inventory'].fillna(0, inplace=True)
-
 
 	# payment_reimbursed.set_index([''])
 	# print(payment_reimbursed.info())
@@ -249,7 +261,7 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	result_reset2 = result_reset2[result_reset2['date_difference'] >= datetime.timedelta(days=0)]
 	result_reset2.sort_values(by=['date_difference', 'level_0'], inplace=True)
 
-	returns2 = pd.DataFrame()
+	returns2 = pd.DataFrame(columns=['level_0', 'Date', 'Quantity', 'date_difference']) # New
 	while len(result_reset2) > 0:
 		returns2 = returns2.append(result_reset2.iloc[0])
 		result_reset2 = result_reset2[(result_reset2['level_0'] != result_reset2['level_0'].iloc[0]) & (result_reset2['level_1'] != result_reset2['level_1'].iloc[0])]
@@ -264,7 +276,8 @@ def reconcile(payment_report, returns_report, reimbursement_report, inventory_le
 	payment_reimbursed_inventory = payment_reimbursed_inventory.rename(columns={'sku': 'SKU', 'fulfillment-center-id': 'Fulfillment Center', 'Reimbursed': 'Quantity', 'total': 'Amount', 'approval-date': 'Approval Date', 'Date': 'Received Date', 'Quantity': 'Quantity Received', 'date_difference': 'Days Difference', 'quantity-difference': 'Quantity Difference', 'amount-difference': 'Amount Difference'})
 	payment_reimbursed_inventory = payment_reimbursed_inventory[['SKU', 'Fulfillment Center', 'Approval Date', 'Quantity', 'Amount', 'Quantity Received', 'Received Date', 'Days Difference', 'Quantity Difference', 'Amount Difference']]
 	payment_reimbursed_inventory['Approval Date'] = payment_reimbursed_inventory['Approval Date'].dt.strftime('%m/%d/%Y')
-	payment_reimbursed_inventory['Received Date'] = payment_reimbursed_inventory['Received Date'].dt.strftime('%m/%d/%Y')
+	if payment_reimbursed_inventory['Received Date'].dtype == datetime: # New
+		payment_reimbursed_inventory['Received Date'] = payment_reimbursed_inventory['Received Date'].dt.strftime('%m/%d/%Y')
 	payment_reimbursed_inventory.to_excel(data_to_excel, sheet_name='5. Inventory Reimbursement', index=False)
 
 #------------------------------Formatting-------------------------------------------

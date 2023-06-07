@@ -10,7 +10,6 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 
 	data_to_excel = pd.ExcelWriter('temp/shipment_reco.xlsx')
 
-
 	#input_path = 'C:\\Users\\amitu\\OneDrive\\quantuitix\\projects\\reconcify\\poc\\nmkcdd\\jillamy\\input_files'
 
 	# booking = pd.DataFrame()
@@ -42,11 +41,12 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 		#booking = booking.append(df)
 		booking = booking.append(df)
 		#print(booking.columns)
+		print(booking.info())
 
 	fba_list = list(set(booking['FBA ID'].to_list()))
 	dispatch_filenames = [f + '_ViewTransaction.xlsx' for f in fba_list]
 
-	dispatch = pd.DataFrame()
+	dispatch = pd.DataFrame(columns=['FBA ID', 'SKU']) # New
 	#dispatch_files = os.listdir(warehouse_reports)
 	#for single_dispatch in os.listdir(warehouse_reports):
 	for single_dispatch in warehouse_reports:
@@ -80,9 +80,15 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 			#print(dispatch.head())
 	#print(dispatch.columns)
 
-	#inventory = pd.read_csv(inv_ledger)
-	inventory = inv_ledger
+	#inventory = pd.read_csv(inv_ledger) # Delete
+	inventory = pd.DataFrame() # New
+	for single_inventory in inv_ledger: # New
+		single_inventory_df = pd.read_csv(single_inventory) # New
+		inventory = inventory.append(single_inventory_df) # New
+
+	# inventory = inv_ledger # Delete
 	inventory['Date'] = pd.to_datetime(inventory['Date'], format='%m/%d/%Y')
+	inventory = inventory.sort_values(by=['Date']) # New
 	inventory['MSKU'] = inventory['MSKU'].astype(str).str[0:12]
 	inventory_receipts = inventory[inventory['Event Type'] == 'Receipts'].rename(columns={'Reference ID': 'FBA ID', 'MSKU': 'SKU'})
 
@@ -100,28 +106,31 @@ def reconcile(ship_instrutions, warehouse_reports, inv_ledger):
 	fba_detail = pd.merge(fba_detail, inventory_extract, on=['FBA ID', 'SKU'], how='outer')
 	fba_detail = fba_detail.rename(columns={'CARTONS': 'CARTONS BOOKED', 'INV QTY': 'CARTONS DISPATCHED', 'QTY': 'UNITS BOOKED', 'QUANTITY': 'UNITS RECEIVED'})
 
-	fba_detail['DISPATCH DAYS'] = fba_detail['DISPATCH DATE'] - fba_detail['BOOKING DATE']
-	fba_detail['RECEIPT DAYS'] = fba_detail['RECEIPT DATE'] - fba_detail['DISPATCH DATE']
+	if len(dispatch) > 0: # New
+		fba_detail['DISPATCH DAYS'] = fba_detail['DISPATCH DATE'] - fba_detail['BOOKING DATE']
+		fba_detail['RECEIPT DAYS'] = fba_detail['RECEIPT DATE'] - fba_detail['DISPATCH DATE']
 
-	fba_detail['BOOKING DATE'] = fba_detail['BOOKING DATE'].dt.strftime('%Y-%m-%d')
-	fba_detail['DISPATCH DATE'] = fba_detail['DISPATCH DATE'].dt.strftime('%Y-%m-%d')
-	fba_detail['RECEIPT DATE'] = fba_detail['RECEIPT DATE'].dt.strftime('%Y-%m-%d')
+		fba_detail['BOOKING DATE'] = fba_detail['BOOKING DATE'].dt.strftime('%Y-%m-%d')
+		fba_detail['DISPATCH DATE'] = fba_detail['DISPATCH DATE'].dt.strftime('%Y-%m-%d')
+		fba_detail['RECEIPT DATE'] = fba_detail['RECEIPT DATE'].dt.strftime('%Y-%m-%d')
 
-	fba_detail['BOOKING DATE'].fillna('NOT AVAILABLE', inplace=True)
-	fba_detail['DISPATCH DATE'].fillna('NOT AVAILABLE', inplace=True)
-	fba_detail['CARTONS BOOKED'].fillna(0, inplace=True)
-	fba_detail['CARTONS DISPATCHED'].fillna(0, inplace=True)
-	fba_detail['UNITS BOOKED'].fillna(0, inplace=True)
-	fba_detail['UNITS RECEIVED'].fillna(0, inplace=True)
-	fba_detail['RECEIPT DATE'].fillna('NOT AVAILABLE', inplace=True)
-	fba_detail['DISPATCH DAYS'].fillna(datetime.timedelta(days=0), inplace=True)
-	fba_detail['RECEIPT DAYS'].fillna(datetime.timedelta(days=0), inplace=True)
-	fba_detail.sort_values(by=['FBA ID', 'BOOKING DATE', 'DISPATCH DATE', 'SKU', 'CARTONS BOOKED', 'CARTONS DISPATCHED', 'UNITS BOOKED', 'UNITS RECEIVED'], inplace=True)
+		fba_detail['BOOKING DATE'].fillna('NOT AVAILABLE', inplace=True)
+		fba_detail['DISPATCH DATE'].fillna('NOT AVAILABLE', inplace=True)
+		fba_detail['CARTONS BOOKED'].fillna(0, inplace=True)
+		fba_detail['CARTONS DISPATCHED'].fillna(0, inplace=True)
+		fba_detail['UNITS BOOKED'].fillna(0, inplace=True)
+		fba_detail['UNITS RECEIVED'].fillna(0, inplace=True)
+		fba_detail['RECEIPT DATE'].fillna('NOT AVAILABLE', inplace=True)
+		fba_detail['DISPATCH DAYS'].fillna(datetime.timedelta(days=0), inplace=True)
+		fba_detail['RECEIPT DAYS'].fillna(datetime.timedelta(days=0), inplace=True)
+		fba_detail.sort_values(by=['FBA ID', 'BOOKING DATE', 'DISPATCH DATE', 'SKU', 'CARTONS BOOKED', 'CARTONS DISPATCHED', 'UNITS BOOKED', 'UNITS RECEIVED'], inplace=True)
 
-	fba_detail.set_index(['FBA ID', 'BOOKING DATE', 'DISPATCH DATE', 'SKU', 'CARTONS BOOKED', 'CARTONS DISPATCHED', 'UNITS BOOKED', 'UNITS RECEIVED'], inplace=True)
+		fba_detail.set_index(['FBA ID', 'BOOKING DATE', 'DISPATCH DATE', 'SKU', 'CARTONS BOOKED', 'CARTONS DISPATCHED', 'UNITS BOOKED', 'UNITS RECEIVED'], inplace=True)
 	#print(fba_detail.info())
 	# fba_detail.to_excel('fba_detail.xlsx')
 	# sys.exit()
+	else:
+		fba_detail['CARTONS DISPATCHED'] = 0 # New
 
 	fba_skuwise = fba_detail.reset_index()
 	fba_skuwise = fba_skuwise.groupby(['FBA ID', 'SKU', 'CARTONS BOOKED', 'CARTONS DISPATCHED', 'UNITS BOOKED']).agg({'UNITS RECEIVED': 'sum'}).reset_index()

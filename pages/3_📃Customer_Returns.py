@@ -60,13 +60,32 @@ if authentication_status:
                     except:
                         print()
                     if payment_report is not None:
-                        payment_report_df = pd.read_csv(payment_report,encoding='latin-1')
+                        if os.path.splitext(payment_report.name)[1] == '.csv': # New
+                            payment_report_df = pd.read_csv(payment_report, encoding='latin1') # New
+                        if os.path.splitext(payment_report.name)[1] == '.xlsx':
+                            payment_report_df = pd.read_excel(payment_report) # New
+
                     if returns_report is not None:
-                        returns_report_df = pd.read_csv(returns_report,encoding='latin-1')
+                        if os.path.splitext(returns_report.name)[1] == '.csv': # New
+                            returns_report_df = pd.read_csv(returns_report) # New
+                        if os.path.splitext(returns_report.name)[1] == '.xlsx':
+                            returns_report_df = pd.read_excel(returns_report) # New
+
                     if reimbursement_report is not None:
-                        reimbursement_report_df = pd.read_csv(reimbursement_report,encoding='latin-1')
+                        if os.path.splitext(reimbursement_report.name)[1] == '.csv': # New
+                            reimbursement_report_df = pd.read_csv(reimbursement_report) # New
+                        if os.path.splitext(reimbursement_report.name)[1] == '.xlsx':
+                            reimbursement_report_df = pd.read_excel(reimbursement_report) # New
+
                     if inventory_ledger is not None:
-                        inventory_ledger_df = pd.read_csv(inventory_ledger,encoding='latin-1')
+                        # inventory_ledger_df = pd.read_csv(inventory_ledger,encoding='latin-1') # Delete
+                        inventory_ledger_df = pd.DataFrame() # New
+                        for single_inventory in inventory_ledger: # New
+                            if os.path.splitext(single_inventory.name)[1] == '.csv': # New
+                                single_inventory_df = pd.read_csv(single_inventory) # New
+                            if os.path.splitext(single_inventory.name)[1] == '.xlsx':
+                                single_inventory_df = pd.read_excel(single_inventory) # New
+                            inventory_ledger_df = inventory_ledger_df.append(single_inventory_df) # New
                     reconcile(payment_report_df, returns_report_df, reimbursement_report_df, inventory_ledger_df)
                 #state.response = [payment_report_df, returns_report_df, reimbursement_report, inventory_ledger_df]
                 emp, but, empty = st.columns([2.05,1.2,1.5])
@@ -125,7 +144,7 @@ if authentication_status:
                 st.write("###")
                 st.write(f'<h5> {"&nbsp; Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
             with upload:
-                inventory_ledger = st.file_uploader("",key = 'inv_led')
+                inventory_ledger = st.file_uploader("",key = 'inv_led', accept_multiple_files=True)
             
             a,button,b = st.columns([2,1.2,1.5]) 
             with button:

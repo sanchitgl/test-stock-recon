@@ -92,9 +92,9 @@ if authentication_status:
                         delete_temp()
                     except:
                         print()
-                    if inventory_ledger is not None:
-                        inventory_ledger_df = pd.read_csv(inventory_ledger)
-                    units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger_df)
+                    # if inventory_ledger is not None: # Delete
+                    #     inventory_ledger_df = pd.read_csv(inventory_ledger) # Delete
+                    units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku = reconcile(shipment_instructions, warehouse_reports, inventory_ledger) # New
                     state.response = [units_booked, excess_units_received, short_units_received, units_received, matching_sku, mismatching_sku]
                     
                     bar_data = [['Units Booked',units_booked],['Excess Units', excess_units_received]
@@ -274,7 +274,7 @@ if authentication_status:
                 st.write("###")
                 st.write(f'<h5> {"&nbsp; Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
             with upload:
-                inventory_ledger = st.file_uploader("",key = 'inv_led')
+                inventory_ledger = st.file_uploader("",key = 'inv_led', accept_multiple_files=True) # New
             
             a,button,b = st.columns([2,1.2,1.5]) 
             with button:

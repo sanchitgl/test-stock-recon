@@ -109,7 +109,7 @@ if authentication_status:
                 st.write("###")
                 st.write(f'<h5>{"&nbsp; Upload Inventory Ledger:"}<h5>', unsafe_allow_html=True)
             with upload:
-                inventory_ledger = st.file_uploader("",key = 'inv_ledger')
+                inventory_ledger = st.file_uploader("",key = 'inv_ledger', accept_multiple_files=True) # New
 
             # text, upload = st.columns([2.5,3])
             # with text:
